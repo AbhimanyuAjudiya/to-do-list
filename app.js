@@ -1,46 +1,83 @@
+//jshint esversion:6
+
 const express = require("express");
 const bodyParser = require("body-parser");
-const date = require(__dirname + "/date.js")
+const mongoose = require("mongoose");
 
 const app = express();
 
-const items = ["Your List", "Play Basket Ball", "Cricket"];
-const workItems = [];
-
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static("public"));
-
 app.set('view engine', 'ejs');
 
-app.get("/", function (req, res) {
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(express.static("public"));
 
-    const day = date.getDate();
+mongoose.connect("mongodb://127.0.0.1:27017/todolistDB", {useNewUrlParser: true});
 
-    res.render("list", { listTitle: day, newListItems: items });
-});
+const itemsSchema = {         //Item Schema
+  name: String            
+};
 
-app.post("/", function (req, res) {
-    const item = req.body.newItem;
+const Item = mongoose.model("item", itemsSchema);   //Item Model
 
-    if (req.body.list === "Work") {
-        workItems.push(item);
-        res.redirect("/work");
+app.get("/", function(req, res) {
+
+
+
+  Item.find({}, function(err, foundItems){
+    if (foundItems.length===0) {
+      Item.insertMany(defaultItems, function(err){
+        if (err){
+          console.log(err);
+        } else {
+          console.log("Default values inserted");
+        }
+      });
+      res.redirect("/");
     } else {
-        items.push(item);
-        res.redirect("/");
+      res.render("list", {listTitle: "Today", newListItems: foundItems});
     }
-
+  });
 
 });
 
-app.get("/work", function (req, res) {
-    res.render("list", { listTitle: "Work List", newListItems: workItems });
+const item1 = new Item ({
+  name: "Welcome to your todolist!!"
+});
+const item2 = new Item ({
+  name: "Hit a + button to add a new item."
+});
+const item3 = new Item ({
+  name: "<--- hit this to delete an item."
+});
+
+const defaultItems = [item1, item2, item3];
+
+
+
+app.post("/", function(req, res){
+
+  const itemName = req.body.newItem;
+
+  const item = new Item ({
+    name: itemName
+  });
+
+  item.save();
+
+  res.redirect("/");
+});
+
+app.get("/work", function(req,res){
+  res.render("list", {listTitle: "Work List", newListItems: workItems});
 });
 
 app.get("/about", function(req, res){
-    res.render("about");
+  res.render("about");
 });
 
-app.listen(3000, function () {
-    console.log("Server is running on port 3000");
+app.listen(3000, function() {
+  console.log("Server started on port 3000");
 });
+
+
+
