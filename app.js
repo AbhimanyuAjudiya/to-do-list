@@ -78,7 +78,6 @@ app.get("/:customListName", function(req, res){
         res.redirect("/" + customListName);
       } else {
         //Show an existing list
-
         res.render("list", {listTitle: foundList.name, newListItems: foundList.items});
       }
     }
@@ -135,7 +134,7 @@ app.get("/about", function(req, res){
   res.render("about");
 });
 
-let port = process.env.PORT;
+let port = process.env.PORT; 
 if (port == null || port == "") {
   port = 3000;
 }
